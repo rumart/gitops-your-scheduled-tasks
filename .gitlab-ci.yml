@@ -1,0 +1,19 @@
+build:
+  stage: build
+  parallel:
+    matrix:
+      - TAG: latest
+      - TAG: $CI_COMMIT_SHORT_SHA
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  before_script:
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${REG_USR}" "${REG_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - cat /kaniko/.docker/config.json
+    - cat ./root.crt >> /kaniko/ssl/certs/additional-ca-cert-bundle.crt
+  script:
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "$CI_REGISTRY/<project>/<image-name>:${TAG}"
