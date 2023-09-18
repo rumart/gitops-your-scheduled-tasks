@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: folder-job
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 60
+      template:
+        spec:
+          containers:
+          - name: vmfolder
+            image: <image-repo>/<project>/gitops-vmfolder:<tag>
+            imagePullPolicy: IfNotPresent
+            command:
+            - pwsh
+            - -file
+            - /tmp/script.ps1
+            env:
+            - name: VCENTER_SERVER
+              value: <some-vcenter-server>"
+            - name: VCENTER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: vc-user-pass
+                  key: username
+            - name: VCENTER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vc-user-pass
+                  key: password
+          restartPolicy: OnFailure
+          imagePullSecrets:
+          - name: regcred
